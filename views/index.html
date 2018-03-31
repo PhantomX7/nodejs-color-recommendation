@@ -46,6 +46,11 @@
           <button class="star" id="star3">★</button>
           <button class="star" id="star4">★</button>
           <button class="star" id="star5">★</button>
+          <button class="star" id="star6">★</button>
+          <button class="star" id="star7">★</button>
+          <button class="star" id="star8">★</button>
+          <button class="star" id="star9">★</button>
+          <button class="star" id="star10">★</button>
           <hr/>
         </div>
 
@@ -95,10 +100,11 @@
       }
 
       stars.forEach((star, i) => {
-        const score = i / 4
+        const score = i
         star.addEventListener("mouseenter", setStars.bind(setStars, i))
         star.addEventListener("mouseleave", clearStars)
         star.addEventListener("click", saveTrainingData.bind(saveTrainingData, score))
+        // star.addEventListener("click", ()=>{console.log(score)})
       })
 
       //helper function
@@ -161,7 +167,7 @@
 
         net.train(data)
 
-        for (let i = 0; i < 200000; i++) {
+        for (let i = 0; i < 100000; i++) {
           let tmpHex= generateRandomColorHex();
 
           const [ score ] = net.run(hexToRgb(tmpHex));
