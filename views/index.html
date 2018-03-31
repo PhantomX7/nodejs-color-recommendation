@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <!-- Bootstrap core CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Material Design Bootstrap -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.5.0/css/mdb.min.css" rel="stylesheet">
+    <style media="screen">
+      hr {
+        background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0));
+        border: 0;
+        height: 1px;
+      }
+      .star {
+        background: none;
+        border: none;
+        color: #999;
+        cursor: pointer;
+        font-size: 18pt;
+        margin: 0;
+        outline: none;
+        padding: 0;
+      }
+      .star.gold {
+        color: goldenrod;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="row mt-5 justify-content-md-center">
+      <div class="col-md-4">
+        <p class="text-center mb-1">Rate this color :</p>
+        <div class="card text-center z-depth-2 align-items-center" id="colorhexContainer">
+          <div class="card-body my-2">
+            <p class="white-text mb-0 p-1" style="background-color:#000;" id="colorhexText"></p>
+          </div>
+        </div>
+        <div class="row justify-content-md-center mt-2">
+          <hr/>
+          <button class="star" id="star1">★</button>
+          <button class="star" id="star2">★</button>
+          <button class="star" id="star3">★</button>
+          <button class="star" id="star4">★</button>
+          <button class="star" id="star5">★</button>
+          <hr/>
+        </div>
+
+      </div>
+
+    </div>
+    <div class="p-2">
+      <p>Here is the top 100 random color that you may like</p>
+      <div class="row" id="topColor">
+
+      </div>
+    </div>
+
+
+
+    <!-- JQuery -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <!-- Bootstrap tooltips -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.13.0/umd/popper.min.js"></script>
+    <!-- Bootstrap core JavaScript -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <!-- MDB core JavaScript -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.5.0/js/mdb.min.js"></script>
+    <!-- Brain JS -->
+    <script type="text/javascript" src="https://unpkg.com/brain.js@1.1.2/browser.min.js"></script>
+    <!-- myscript -->
+    <script type="text/javascript">
+      // Star
+      const stars = document.querySelectorAll(".star")
+      window.localStorage.trainingData = window.localStorage.trainingData || JSON.stringify([])
+
+      let hex=0;
+
+      function setStars(whichStar) {
+        for (let i = 0; i < stars.length; i++) {
+          stars[i].classList.add("gold")
+          if (i >= whichStar) {
+            break;
+          }
+        }
+      }
+
+      function clearStars() {
+        for (const star of stars) {
+          star.classList.remove("gold")
+        }
+      }
+
+      stars.forEach((star, i) => {
+        const score = i / 4
+        star.addEventListener("mouseenter", setStars.bind(setStars, i))
+        star.addEventListener("mouseleave", clearStars)
+        star.addEventListener("click", saveTrainingData.bind(saveTrainingData, score))
+      })
+
+      //helper function
+      function hexToRgb(hex) {
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16)
+        } : null;
+      }
+
+      function componentToHex(c) {
+        var hex = c.toString(16);
+        return hex.length == 1 ? "0" + hex : hex;
+      }
+
+      function rgbToHex(r, g, b) {
+        return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+      }
+
+      //generate random color
+      function generateRandomColorHex() {
+        return "#000000".replace(/0/g,function(){return (~~(Math.random()*16)).toString(16);});
+      }
+
+      $( document ).ready(function() {
+        generateRandomColorBox();
+      });
+
+      function generateRandomColorBox(){
+        hex = generateRandomColorHex();
+        $('#colorhexText').text(hex);
+        $('#colorhexContainer').css('background-color', hex);
+      }
+
+      function generateColorBoxTemplate(color) {
+        return `
+          <div class="col-md-3 p-1">
+            <div class="card text-center z-depth-2 align-items-center" id="colorhexContainer" style="background-color:${color}">
+              <div class="card-body my-2">
+                <p class="white-text mb-0 p-1" style="background-color:#000;" id="colorhexText">${color}</p>
+              </div>
+            </div>
+          </div>
+        `
+      }
+
+      //neural network
+      // once we have a good set of data, generate some color combinations!
+      function predictColorCombinations() {
+        const data = JSON.parse(window.localStorage.trainingData)
+        if (!data.length) {
+          return;
+        }
+        console.log(data);
+
+        const net = new brain.NeuralNetwork({activation: "leaky-relu"});
+        const results = []
+
+        net.train(data)
+
+        for (let i = 0; i < 200000; i++) {
+          let tmpHex= generateRandomColorHex();
+
+          const [ score ] = net.run(hexToRgb(tmpHex));
+          results.push({ hex: tmpHex, score})
+        }
+
+        // sort results
+        const sortedResults = results.sort(function(a, b) {
+          var a = a.score
+          var b = b.score
+
+          return b - a
+        })
+
+        // keep the top 20 results!
+        $('#topColor').empty();
+        for (let i = 0; i < 100; i++) {
+          $('#topColor').append(generateColorBoxTemplate(sortedResults[i].hex));
+        }
+      }
+
+      function saveTrainingData(score) {
+        const data = JSON.parse(window.localStorage.trainingData)
+        data.push({
+          input: [
+            hexToRgb(hex)
+          ],
+          output: [score]
+        })
+
+        window.localStorage.trainingData = JSON.stringify(data)
+
+        predictColorCombinations()
+        clearStars()
+        generateRandomColorBox()
+      }
+    </script>
+
+  </body>
+</html>
