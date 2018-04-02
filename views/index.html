@@ -100,7 +100,7 @@
       }
 
       stars.forEach((star, i) => {
-        const score = i
+        const score = i/9
         star.addEventListener("mouseenter", setStars.bind(setStars, i))
         star.addEventListener("mouseleave", clearStars)
         star.addEventListener("click", saveTrainingData.bind(saveTrainingData, score))
@@ -111,9 +111,9 @@
       function hexToRgb(hex) {
         var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
         return result ? {
-          r: parseInt(result[1], 16),
-          g: parseInt(result[2], 16),
-          b: parseInt(result[3], 16)
+          r: Math.round(parseInt(result[1], 16)/2.55) / 100,
+          g: Math.round(parseInt(result[2], 16)/2.55) / 100,
+          b: Math.round(parseInt(result[3], 16)/2.55) / 100
         } : null;
       }
 
@@ -169,7 +169,6 @@
 
         for (let i = 0; i < 100000; i++) {
           let tmpHex= generateRandomColorHex();
-
           const [ score ] = net.run(hexToRgb(tmpHex));
           results.push({ hex: tmpHex, score})
         }
@@ -192,11 +191,10 @@
       function saveTrainingData(score) {
         const data = JSON.parse(window.localStorage.trainingData)
         data.push({
-          input: [
-            hexToRgb(hex)
-          ],
+          input: hexToRgb(hex),
           output: [score]
         })
+        console.log(data[0]);
 
         window.localStorage.trainingData = JSON.stringify(data)
 
